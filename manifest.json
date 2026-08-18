@@ -1,0 +1,56 @@
+{
+  "name": "MATHENA — Kebijaksanaan dari Pengetahuan yang Utuh",
+  "short_name": "MATHENA",
+  "description": "Platform Pembelajaran Matematika dan Assessment Management Terintegrasi",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
+  "lang": "id-ID",
+  "dir": "ltr",
+  "categories": ["education", "productivity"],
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/isramiraj1443-ship-it/MATHENA/main/icon4.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/isramiraj1443-ship-it/MATHENA/main/icon4.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Dashboard",
+      "short_name": "Dashboard",
+      "description": "Buka Dashboard Mathena",
+      "url": "/#dashboard",
+      "icons": [
+        {
+          "src": "https://raw.githubusercontent.com/isramiraj1443-ship-it/MATHENA/main/icon4.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "EXAM CBT",
+      "short_name": "CBT",
+      "description": "Masuk ke Modul Ujian CBT",
+      "url": "/#cbt",
+      "icons": [
+        {
+          "src": "https://raw.githubusercontent.com/isramiraj1443-ship-it/MATHENA/main/icon4.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ]
+}
