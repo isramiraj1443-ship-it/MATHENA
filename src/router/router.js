@@ -1,8 +1,5 @@
-// ==================== FILE: src/router/router.js ====================
 /**
- * MATHENA CLIENT-SIDE SPA ROUTER
- * Mengelola transisi view, validasi session token, role guarding ketat,
- * dan routing seluruh modul Admin, Guru, Siswa, serta Pengawas.
+ * MATHENA CLIENT-SIDE SPA ROUTER (UNIFIED)
  */
 
 import { store } from '../store/state.js';
@@ -11,7 +8,7 @@ import { LoginView } from '../views/login.js';
 
 export const ViewRegistry = {
   dashboard: null,
-  students: null, // Modul Data Siswa & Kelas
+  students: null,
   learning: null,
   assignments: null,
   assessment: null,
@@ -55,51 +52,22 @@ class Router {
   handleRoute() {
     const rawHash = window.location.hash || '#login';
     const hash = rawHash.split('?')[0];
-    const routeConfig = this.routes[hash];
+    const routeConfig = this.routes[hash] || this.routes['#dashboard'];
     const state = store.getState();
 
-    if (!routeConfig) {
-      store.showToast('Halaman yang diminta tidak ditemukan.', 'warning');
-      window.location.hash = state.isAuthenticated ? '#dashboard' : '#login';
-      return;
-    }
-
     if (!routeConfig.public && !state.isAuthenticated) {
-      store.showToast('Silakan login terlebih dahulu untuk melanjutkan.', 'warning');
       window.location.hash = '#login';
       return;
     }
 
-    if (routeConfig.public && state.isAuthenticated) {
-      window.location.hash = state.role === 'PROCTOR' || state.role === 'PENGAWAS' ? '#proctor' : '#dashboard';
-      return;
-    }
-
-    if (routeConfig.roles && routeConfig.roles.length > 0) {
-      const userRole = (state.role || '').toUpperCase();
-      if (!routeConfig.roles.includes(userRole)) {
-        store.showToast(`Akses Ditolak: Peran [${userRole}] tidak diizinkan membuka modul ini.`, 'error');
-        window.location.hash = userRole === 'PROCTOR' || userRole === 'PENGAWAS' ? '#proctor' : '#dashboard';
-        return;
-      }
-    }
-
-    this.renderCurrentView(hash, routeConfig);
-  }
-
-  renderCurrentView(hash, routeConfig) {
+    const viewContent = routeConfig.view() || '<div class="glass-panel" style="padding:20px;">Memuat modul...</div>';
     if (hash === '#login') {
-      this.appRoot.innerHTML = routeConfig.view();
-      routeConfig.init();
+      this.appRoot.innerHTML = viewContent;
     } else {
-      const viewContent = routeConfig.view ? (routeConfig.view() || '<div class="glass-panel" style="padding:20px;">Memuat modul...</div>') : '<div class="glass-panel" style="padding:20px;">Modul sedang dipersiapkan...</div>';
       this.appRoot.innerHTML = Layout.renderAppShell(viewContent, hash);
-      Layout.bindShellEvents();
-      if (routeConfig.init) {
-        routeConfig.init();
-      }
-      Layout.renderMathFormulas(document.getElementById('app-main-viewport'));
     }
+    if (routeConfig.init) routeConfig.init();
+    Layout.renderMathFormulas(document.getElementById('app-main-viewport'));
   }
 }
 
