@@ -15,6 +15,7 @@ import { StudentDashboardView } from './views/student/dashboard.js';
 import { QAChatView } from './views/qa/qa_chat.js';
 import { CBTExamRoomView } from './views/cbt/exam_room.js';
 import { ProctorMonitoringView } from './views/proctor/monitoring.js';
+import { DeveloperView } from './views/developer/developer.js';
 
 function configureViewRegistry() {
   const role = (store.getState().role || '').toUpperCase();
@@ -39,6 +40,7 @@ function configureViewRegistry() {
   ViewRegistry.journal = AdminJournalsView;
   ViewRegistry.reports = AdminReportsView;
   ViewRegistry.proctor = ProctorMonitoringView;
+  ViewRegistry.developer = DeveloperView;
 }
 
 configureViewRegistry();
