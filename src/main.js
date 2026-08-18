@@ -1,7 +1,4 @@
-/**
- * MATHENA MAIN ENTRY POINT
- */
-
+// ==================== FILE: src/main.js ====================
 import { router, ViewRegistry } from './router/router.js';
 import { store } from './store/state.js';
 
@@ -46,6 +43,12 @@ function configureViewRegistry() {
 
 configureViewRegistry();
 store.subscribe(configureViewRegistry);
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(err => console.warn(err));
+  });
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   router.init();
