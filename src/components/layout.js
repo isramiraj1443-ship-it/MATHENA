@@ -1,6 +1,7 @@
+// ==================== FILE: src/components/layout.js ====================
 /**
  * MATHENA COMMON LAYOUT & UI COMPONENTS
- * Menyediakan App Shell, Header, Sidebar Guru/Admin, Mobile Bottom Navigation Siswa,
+ * Menyediakan App Shell, Header, Sidebar Lengkap Guru/Admin, Mobile Nav Siswa,
  * Toast Notifications Container, dan KaTeX Math Rendering Dispatcher.
  */
 
@@ -8,17 +9,10 @@ import { store } from '../store/state.js';
 import { api } from '../services/api.js';
 
 export const Layout = {
-  /**
-   * Render Shell Utama (Header, Sidebar / Mobile Nav, Container Konten)
-   */
   renderAppShell(contentHtml, activeRoute) {
     const state = store.getState();
     const user = state.user || { name: 'User', role: state.role || 'GUEST' };
     const role = (state.role || '').toUpperCase();
-
-    const isAdminOrGuru = role === 'ADMIN' || role === 'GURU' || role === 'ADMIN_GURU';
-    const isStudent = role === 'STUDENT' || role === 'SISWA';
-    const isProctor = role === 'PROCTOR' || role === 'PENGAWAS';
 
     return `
       <div id="app" class="mathena-app-wrapper">
@@ -42,7 +36,7 @@ export const Layout = {
             <!-- User Pill -->
             <div style="display: flex; align-items: center; gap: 10px; padding: 4px 12px; background: rgba(255,255,255,0.05); border-radius: var(--radius-sm); border: 1px solid var(--glass-border);">
               <div style="text-align: right;">
-                <div style="font-weight: 600; font-size: 0.88rem; color: var(--white-crisp);">${this.escapeHtml(user.name || user.username || 'Pengguna')}</div>
+                <div style="font-weight: 600; font-size: 0.88rem; color: var(--white-crisp);">${this.escapeHtml(user.fullName || user.name || user.username || 'Pengguna')}</div>
                 <div style="font-size: 0.72rem; color: var(--white-muted); text-transform: uppercase;">${role}</div>
               </div>
               <button id="btn-logout" class="btn btn-secondary btn-sm" title="Keluar dari sistem" style="padding: 4px 8px;">
@@ -64,7 +58,7 @@ export const Layout = {
           </main>
         </div>
 
-        <!-- MOBILE BOTTOM NAVIGATION (Khusus Siswa & Mobile Screen) -->
+        <!-- MOBILE BOTTOM NAVIGATION -->
         <nav class="mobile-bottom-nav">
           ${this.renderMobileNavItems(role, activeRoute)}
         </nav>
@@ -78,33 +72,35 @@ export const Layout = {
   renderSidebarMenu(role, activeRoute) {
     const isAdminOrGuru = role === 'ADMIN' || role === 'GURU' || role === 'ADMIN_GURU';
     const isProctor = role === 'PROCTOR' || role === 'PENGAWAS';
-    const isStudent = role === 'STUDENT' || role === 'SISWA';
 
     if (isAdminOrGuru) {
       return `
         <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--white-muted); padding: 8px 14px 4px; font-weight: 700;">Akademik & Utama</div>
         <a href="#dashboard" class="nav-item ${activeRoute === '#dashboard' ? 'active' : ''}">
-          <span class="nav-icon">📊</span> Dashboard
+          <span class="nav-icon">📊</span> Dashboard Utama
+        </a>
+        <a href="#students" class="nav-item ${activeRoute === '#students' ? 'active' : ''}">
+          <span class="nav-icon">👥</span> Data Siswa & Kelas
         </a>
         <a href="#learning" class="nav-item ${activeRoute === '#learning' ? 'active' : ''}">
-          <span class="nav-icon">📚</span> Materi & Modul
+          <span class="nav-icon">📚</span> Materi & Bahan Ajar
         </a>
         <a href="#assignments" class="nav-item ${activeRoute === '#assignments' ? 'active' : ''}">
-          <span class="nav-icon">📝</span> Penugasan
+          <span class="nav-icon">📝</span> Penugasan & Koreksi
         </a>
         <a href="#assessment" class="nav-item ${activeRoute === '#assessment' ? 'active' : ''}">
-          <span class="nav-icon">📈</span> Penilaian & Formatif
+          <span class="nav-icon">📈</span> Penilaian Formatif 1–5
         </a>
         <a href="#qa" class="nav-item ${activeRoute === '#qa' ? 'active' : ''}">
           <span class="nav-icon">💬</span> Tanya Jawab (QA)
         </a>
         <a href="#journal" class="nav-item ${activeRoute === '#journal' ? 'active' : ''}">
-          <span class="nav-icon">📖</span> Jurnal KBM
+          <span class="nav-icon">📖</span> Jurnal KBM Guru
         </a>
 
         <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--white-muted); padding: 14px 14px 4px; font-weight: 700;">Ujian & Evaluasi</div>
         <a href="#cbt" class="nav-item ${activeRoute === '#cbt' ? 'active' : ''}">
-          <span class="nav-icon">💻</span> EXAM CBT
+          <span class="nav-icon">💻</span> EXAM CBT Platform
         </a>
 
         <!-- FITUR KHUSUS GURU SESUAI PRD: MATHENA AI -->
@@ -184,9 +180,6 @@ export const Layout = {
     `;
   },
 
-  /**
-   * Bind event global pada app shell (Logout, Toast UI rendering, KaTeX math parser)
-   */
   bindShellEvents() {
     const btnLogout = document.getElementById('btn-logout');
     if (btnLogout) {
@@ -200,12 +193,10 @@ export const Layout = {
       });
     }
 
-    // Subscribe ke update Toast
     store.subscribe((state) => {
       this.renderToasts(state.toasts);
     });
 
-    // Jalankan KaTeX Math Renderer untuk setiap elemen rumus
     this.renderMathFormulas();
   },
 
@@ -228,18 +219,13 @@ export const Layout = {
     }).join('');
   },
 
-  /**
-   * KaTeX Formula Parser Integration
-   */
   renderMathFormulas(targetElement = document.body) {
     if (window.renderMathInElement) {
       try {
         window.renderMathInElement(targetElement, {
           delimiters: [
             { left: '$$', right: '$$', display: true },
-            { left: '$', right: '$', display: false },
-            { left: '\\(', right: '\\)', display: false },
-            { left: '\\[', right: '\\]', display: true }
+            { left: '$', right: '$', display: false }
           ],
           throwOnError: false
         });
