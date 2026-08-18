@@ -1,16 +1,10 @@
 // ==================== FILE: src/main.js ====================
-/**
- * MATHENA APPLICATION BOOTSTRAPPER (ENTRY POINT)
- * Mengintegrasikan seluruh router, state store, PWA service worker,
- * serta menghubungkan seluruh modul views (Admin, Guru, Siswa, CBT, dan Proctor).
- */
-
 import { router, ViewRegistry } from './router/router.js';
 import { store } from './store/state.js';
 
-// Import Modul Admin / Guru
+// Modul Admin
 import { AdminDashboardView } from './views/admin/dashboard.js';
-import { AdminStudentsView } from './views/admin/students.js'; // View Data Siswa Baru
+import { AdminStudentsView } from './views/admin/students.js';
 import { AdminMaterialsView } from './views/admin/materials.js';
 import { AdminAssignmentsView } from './views/admin/assignments.js';
 import { AdminAssessmentsView } from './views/admin/assessments.js';
@@ -18,7 +12,7 @@ import { AdminAiCopilotView } from './views/admin/ai_copilot.js';
 import { AdminJournalsView } from './views/admin/journals.js';
 import { AdminReportsView } from './views/admin/reports.js';
 
-// Import Modul Siswa, QA, CBT Engine & Pengawas
+// Modul Siswa & CBT Engine Terpadu
 import { StudentDashboardView } from './views/student/dashboard.js';
 import { QAChatView } from './views/qa/qa_chat.js';
 import { CBTExamRoomView } from './views/cbt/exam_room.js';
@@ -29,7 +23,6 @@ function configureViewRegistry() {
   const isStudent = role === 'STUDENT' || role === 'SISWA';
   const isProctor = role === 'PROCTOR' || role === 'PENGAWAS';
 
-  // Dashboard Router Switch
   if (isStudent) {
     ViewRegistry.dashboard = StudentDashboardView;
   } else if (isProctor) {
@@ -38,36 +31,24 @@ function configureViewRegistry() {
     ViewRegistry.dashboard = AdminDashboardView;
   }
 
-  // Modul Akademik & Siswa
   ViewRegistry.students = AdminStudentsView;
   ViewRegistry.learning = AdminMaterialsView;
   ViewRegistry.assignments = AdminAssignmentsView;
   ViewRegistry.assessment = AdminAssessmentsView;
-
-  // Modul Tanya Jawab & CBT
   ViewRegistry.qa = QAChatView;
-  ViewRegistry.cbt = CBTExamRoomView;
-
-  // Modul Khusus Guru (PRD Strict Compliance)
+  ViewRegistry.cbt = CBTExamRoomView; // CBT Engine Master
   ViewRegistry.ai = AdminAiCopilotView;
   ViewRegistry.journal = AdminJournalsView;
   ViewRegistry.reports = AdminReportsView;
-
-  // Modul Pengawas
   ViewRegistry.proctor = ProctorMonitoringView;
 }
 
 configureViewRegistry();
-
-store.subscribe(() => {
-  configureViewRegistry();
-});
+store.subscribe(configureViewRegistry);
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then((reg) => console.log('[Mathena PWA] Service Worker aktif:', reg.scope))
-      .catch((err) => console.warn('[Mathena PWA] Registrasi SW gagal:', err));
+    navigator.serviceWorker.register('/sw.js').catch(err => console.warn(err));
   });
 }
 
