@@ -23,7 +23,7 @@ export const LoginView = {
               Kebijaksanaan dari Pengetahuan yang Utuh
             </p>
             <p style="font-size: 0.78rem; color: var(--white-muted); line-height: 1.4;">
-              Platform Pembelajaran Matematika Dan Asesmen Pembelajaran
+              Platform Pembelajaran Matematika dan Assessment Management Terintegrasi
             </p>
           </div>
 
