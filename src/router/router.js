@@ -1,16 +1,17 @@
+// ==================== FILE: src/router/router.js ====================
 /**
  * MATHENA CLIENT-SIDE SPA ROUTER
- * Mengelola transisi view, validasi session token, role guarding ketat
- * (termasuk isolasi total Mathena AI khusus Admin/Guru), dan render shell.
+ * Mengelola transisi view, validasi session token, role guarding ketat,
+ * dan routing seluruh modul Admin, Guru, Siswa, serta Pengawas.
  */
 
 import { store } from '../store/state.js';
 import { Layout } from '../components/layout.js';
 import { LoginView } from '../views/login.js';
 
-// Route Handlers Placeholder Registry (Akan diisi oleh View Module pada Bagian 3 & 4)
 export const ViewRegistry = {
   dashboard: null,
+  students: null, // Modul Data Siswa & Kelas
   learning: null,
   assignments: null,
   assessment: null,
@@ -28,12 +29,12 @@ class Router {
     this.routes = {
       '#login': { roles: [], public: true, view: () => LoginView.render(), init: () => LoginView.initEvents() },
       '#dashboard': { roles: ['ADMIN', 'GURU', 'ADMIN_GURU', 'STUDENT', 'SISWA'], view: () => ViewRegistry.dashboard?.render(), init: () => ViewRegistry.dashboard?.initEvents() },
+      '#students': { roles: ['ADMIN', 'GURU', 'ADMIN_GURU'], view: () => ViewRegistry.students?.render(), init: () => ViewRegistry.students?.initEvents() },
       '#learning': { roles: ['ADMIN', 'GURU', 'ADMIN_GURU', 'STUDENT', 'SISWA'], view: () => ViewRegistry.learning?.render(), init: () => ViewRegistry.learning?.initEvents() },
       '#assignments': { roles: ['ADMIN', 'GURU', 'ADMIN_GURU', 'STUDENT', 'SISWA'], view: () => ViewRegistry.assignments?.render(), init: () => ViewRegistry.assignments?.initEvents() },
       '#assessment': { roles: ['ADMIN', 'GURU', 'ADMIN_GURU'], view: () => ViewRegistry.assessment?.render(), init: () => ViewRegistry.assessment?.initEvents() },
       '#qa': { roles: ['ADMIN', 'GURU', 'ADMIN_GURU', 'STUDENT', 'SISWA'], view: () => ViewRegistry.qa?.render(), init: () => ViewRegistry.qa?.initEvents() },
       '#cbt': { roles: ['ADMIN', 'GURU', 'ADMIN_GURU', 'STUDENT', 'SISWA', 'PROCTOR', 'PENGAWAS'], view: () => ViewRegistry.cbt?.render(), init: () => ViewRegistry.cbt?.initEvents() },
-      // AI STRICT ACCESS: HANYA ADMIN & GURU SESUAI PRD FR-13 & NON-GOALS
       '#ai': { roles: ['ADMIN', 'GURU', 'ADMIN_GURU'], view: () => ViewRegistry.ai?.render(), init: () => ViewRegistry.ai?.initEvents() },
       '#journal': { roles: ['ADMIN', 'GURU', 'ADMIN_GURU'], view: () => ViewRegistry.journal?.render(), init: () => ViewRegistry.journal?.initEvents() },
       '#reports': { roles: ['ADMIN', 'GURU', 'ADMIN_GURU'], view: () => ViewRegistry.reports?.render(), init: () => ViewRegistry.reports?.initEvents() },
@@ -53,31 +54,27 @@ class Router {
 
   handleRoute() {
     const rawHash = window.location.hash || '#login';
-    const hash = rawHash.split('?')[0]; // Pisahkan query parameters jika ada
+    const hash = rawHash.split('?')[0];
     const routeConfig = this.routes[hash];
     const state = store.getState();
 
-    // 1. Validasi Endpoint Tidak Dikenal -> Redirect
     if (!routeConfig) {
       store.showToast('Halaman yang diminta tidak ditemukan.', 'warning');
       window.location.hash = state.isAuthenticated ? '#dashboard' : '#login';
       return;
     }
 
-    // 2. Proteksi Autentikasi
     if (!routeConfig.public && !state.isAuthenticated) {
       store.showToast('Silakan login terlebih dahulu untuk melanjutkan.', 'warning');
       window.location.hash = '#login';
       return;
     }
 
-    // 3. Jika sudah login dan membuka #login -> lempar ke dashboard
     if (routeConfig.public && state.isAuthenticated) {
       window.location.hash = state.role === 'PROCTOR' || state.role === 'PENGAWAS' ? '#proctor' : '#dashboard';
       return;
     }
 
-    // 4. Role-Based Access Guarding Ketat
     if (routeConfig.roles && routeConfig.roles.length > 0) {
       const userRole = (state.role || '').toUpperCase();
       if (!routeConfig.roles.includes(userRole)) {
@@ -87,7 +84,6 @@ class Router {
       }
     }
 
-    // 5. Render Layout & View
     this.renderCurrentView(hash, routeConfig);
   }
 
