@@ -1,15 +1,12 @@
+// ==================== FILE: src/views/admin/assessments.js ====================
 /**
  * MATHENA ASSESSMENT ENGINE VIEW
- * Mengelola:
- * 1. Diagnostik (Baseline awal)
- * 2. Formatif 1–5 (STRICT RULE: Dibatasi maksimal 5, CBT terpisah & tidak boleh jadi F6)
- * 3. Sikap (5 Indikator) & Kehadiran (H/I/S/A)
- * 4. Assessment Summary & Progress Trends (MENINGKAT, STABIL, MENURUN, PERLU_PERHATIAN)
+ * Mengelola Penilaian Diagnostik, Formatif 1–5 (Maksimal 5 Sesuai PRD),
+ * Sikap, Kehadiran, dan Analisis Progres Belajar.
  */
 
 import { api } from '../../services/api.js';
 import { store } from '../../store/state.js';
-import { Layout } from '../../components/layout.js';
 
 export const AdminAssessmentsView = {
   render() {
@@ -18,14 +15,14 @@ export const AdminAssessmentsView = {
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
           <div>
-            <h1 style="font-size: 1.6rem;">📈 Mesin Penilaian & Analisis Siswa</h1>
+            <h1 style="font-size: 1.6rem; color: var(--white-crisp);">📈 Mesin Penilaian & Analisis Siswa</h1>
             <p style="font-size: 0.85rem; color: var(--white-muted);">
-              Penilaian Diagnostik $\\to$ Formatif (Maksimal 5) $\\to$ Sikap & Kehadiran $\\to$ Rekap Longitudinal.
+              Siklus Penilaian: Diagnostik → Formatif 1–5 (Maksimal 5) → Sikap & Presensi → Rekap Longitudinal.
             </p>
           </div>
           
           <div style="display: flex; gap: 8px;">
-            <select id="assess-filter-class" class="form-select" style="width: 160px; height: 38px;">
+            <select id="assess-filter-class" class="form-select" style="width: 150px; height: 38px;">
               <option value="7A">Kelas 7A</option>
               <option value="7B">Kelas 7B</option>
               <option value="8A" selected>Kelas 8A</option>
@@ -44,13 +41,13 @@ export const AdminAssessmentsView = {
 
         <!-- TAB 1: REKAP SUMMARY & LONGITUDINAL PROGRESS -->
         <div id="tab-summary" class="assess-tab-content">
-          <div class="glass-panel" style="padding: 20px; margin-bottom: 20px;">
+          <div class="glass-panel" style="padding: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
               <div>
-                <h3 style="font-size: 1.15rem; color: var(--teal-primary);">Rekapitulasi Perkembangan Belajar Siswa</h3>
-                <span style="font-size: 0.78rem; color: var(--white-muted);">Data bersumber dari Diagnostik, Formatif 1–5, Sikap, dan Presensi Kehadiran.</span>
+                <h3 style="font-size: 1.15rem; color: var(--teal-primary);">Rekapitulasi Capaian Belajar Siswa</h3>
+                <span style="font-size: 0.78rem; color: var(--white-muted);">Data terintegrasi dari Diagnostik, Formatif 1–5, Sikap, dan Presensi.</span>
               </div>
-              <button id="btn-export-assessment" class="btn btn-outline-teal btn-sm">📥 Ekspor CSV/PDF</button>
+              <button id="btn-export-assessment" class="btn btn-outline-teal btn-sm">📥 Ekspor CSV</button>
             </div>
 
             <div class="table-container">
@@ -65,17 +62,17 @@ export const AdminAssessmentsView = {
                     <th>F4</th>
                     <th>F5</th>
                     <th>Sikap</th>
-                    <th>Kehadiran</th>
-                    <th>Status Perkembangan</th>
+                    <th>Presensi</th>
+                    <th>Status Progres</th>
                   </tr>
                 </thead>
-                <tbody id="assessment-summary-tbody">
+                <tbody>
                   <tr>
                     <td>
-                      <div style="font-weight: 600;">Ahmad Rizky Pratama</div>
+                      <div style="font-weight: 600;">Aditya Pratama</div>
                       <div style="font-size: 0.72rem; color: var(--white-muted);">STU-2026-001</div>
                     </td>
-                    <td><span class="badge badge-teal">72 (Sedang)</span></td>
+                    <td><span class="badge badge-teal">72</span></td>
                     <td>78</td>
                     <td>84</td>
                     <td>88</td>
@@ -90,7 +87,7 @@ export const AdminAssessmentsView = {
                       <div style="font-weight: 600;">Citra Dewi Lestari</div>
                       <div style="font-size: 0.72rem; color: var(--white-muted);">STU-2026-002</div>
                     </td>
-                    <td><span class="badge badge-teal">85 (Tinggi)</span></td>
+                    <td><span class="badge badge-teal">85</span></td>
                     <td>85</td>
                     <td>86</td>
                     <td>85</td>
@@ -105,7 +102,7 @@ export const AdminAssessmentsView = {
                       <div style="font-weight: 600;">Dimas Arya Pamungkas</div>
                       <div style="font-size: 0.72rem; color: var(--white-muted);">STU-2026-003</div>
                     </td>
-                    <td><span class="badge badge-gold">55 (Dasar)</span></td>
+                    <td><span class="badge badge-gold">55</span></td>
                     <td>60</td>
                     <td>58</td>
                     <td>50</td>
@@ -121,21 +118,20 @@ export const AdminAssessmentsView = {
           </div>
         </div>
 
-        <!-- TAB 2: FORMATIF 1–5 (STRICT RULE COMPLIANCE) -->
+        <!-- TAB 2: FORMATIF 1–5 -->
         <div id="tab-formative" class="assess-tab-content" style="display: none;">
           <div class="glass-panel" style="padding: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
               <div>
                 <h3 style="color: var(--teal-primary);">Input Nilai Formatif Siswa</h3>
                 <p style="font-size: 0.8rem; color: var(--gold-celestial); font-weight: 600;">
-                  ⚠️ Aturan PRD: Formatif dibatasi tepat maksimal 5 (F1–F5). CBT berada di modul terpisah.
+                  ⚠️ Aturan PRD: Formatif dibatasi tepat maksimal 5 (F1–F5).
                 </p>
               </div>
 
-              <!-- Pilihan Khusus Formatif 1 s/d 5 SAJA -->
               <div style="display: flex; align-items: center; gap: 10px;">
                 <label class="form-label" style="margin: 0;">Pilih Formatif:</label>
-                <select id="formative-slot-select" class="form-select" style="width: 140px; height: 36px;">
+                <select id="formative-slot-select" class="form-select" style="width: 150px; height: 36px;">
                   <option value="1">Formatif 1 (F1)</option>
                   <option value="2">Formatif 2 (F2)</option>
                   <option value="3" selected>Formatif 3 (F3)</option>
@@ -153,39 +149,21 @@ export const AdminAssessmentsView = {
                       <th>Siswa</th>
                       <th>Materi / Indikator</th>
                       <th>Skor Formatif (0–100)</th>
-                      <th>Catatan Feedback Formatif</th>
+                      <th>Catatan Feedback</th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
-                      <td>Ahmad Rizky Pratama</td>
+                      <td>Aditya Pratama</td>
                       <td>Teorema Pythagoras & Segitiga Istimewa</td>
-                      <td style="width: 120px;">
-                        <input type="number" class="form-input f-score-input" value="88" min="0" max="100" />
-                      </td>
-                      <td>
-                        <input type="text" class="form-input f-feedback-input" value="Sangat menguasai identifikasi hipotenusa." />
-                      </td>
+                      <td style="width: 120px;"><input type="number" class="form-input" value="88" min="0" max="100" /></td>
+                      <td><input type="text" class="form-input" value="Penguasaan konsep segitiga siku-siku sangat baik." /></td>
                     </tr>
                     <tr>
                       <td>Citra Dewi Lestari</td>
                       <td>Teorema Pythagoras & Segitiga Istimewa</td>
-                      <td>
-                        <input type="number" class="form-input f-score-input" value="85" min="0" max="100" />
-                      </td>
-                      <td>
-                        <input type="text" class="form-input f-feedback-input" value="Perhitungan akar sangat teliti." />
-                      </td>
-                    </tr>
-                    <tr>
-                      <td>Dimas Arya Pamungkas</td>
-                      <td>Teorema Pythagoras & Segitiga Istimewa</td>
-                      <td>
-                        <input type="number" class="form-input f-score-input" value="50" min="0" max="100" />
-                      </td>
-                      <td>
-                        <input type="text" class="form-input f-feedback-input" value="Perlu bimbingan remedial konsep kuadrat bilangan." />
-                      </td>
+                      <td><input type="number" class="form-input" value="85" min="0" max="100" /></td>
+                      <td><input type="text" class="form-input" value="Perhitungan akar sangat teliti." /></td>
                     </tr>
                   </tbody>
                 </table>
@@ -217,16 +195,10 @@ export const AdminAssessmentsView = {
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Ahmad Rizky Pratama</td>
+                    <td>Aditya Pratama</td>
                     <td><span class="badge badge-teal">Menengah (72)</span></td>
                     <td>Aritmatika dasar kuat</td>
                     <td>Visualisasi spasial perlu dilatih</td>
-                  </tr>
-                  <tr>
-                    <td>Dimas Arya Pamungkas</td>
-                    <td><span class="badge badge-gold">Dasar (55)</span></td>
-                    <td>Ketekunan dalam mencoba</td>
-                    <td>Operasi perkalian & akar bilangan perlu remedial</td>
                   </tr>
                 </tbody>
               </table>
@@ -247,25 +219,17 @@ export const AdminAssessmentsView = {
                     <th>Tanggung Jawab</th>
                     <th>Kerja Sama</th>
                     <th>Keaktifan</th>
-                    <th>Presensi (H / I / S / A)</th>
+                    <th>Presensi (Hadir/Izin/Sakit/Alpa)</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Ahmad Rizky Pratama</td>
+                    <td>Aditya Pratama</td>
                     <td><span class="badge badge-success">Sangat Baik</span></td>
                     <td><span class="badge badge-success">Sangat Baik</span></td>
                     <td><span class="badge badge-success">Baik</span></td>
                     <td><span class="badge badge-teal">Aktif</span></td>
-                    <td>H: 14 | I: 1 | S: 0 | A: 0 (93%)</td>
-                  </tr>
-                  <tr>
-                    <td>Dimas Arya Pamungkas</td>
-                    <td><span class="badge badge-gold">Cukup</span></td>
-                    <td><span class="badge badge-gold">Cukup</span></td>
-                    <td><span class="badge badge-success">Baik</span></td>
-                    <td><span class="badge badge-gold">Pasif</span></td>
-                    <td>H: 11 | I: 1 | S: 1 | A: 2 (73%)</td>
+                    <td>Hadir: 14 • Izin: 1 • Sakit: 0 • Alpa: 0 (93%)</td>
                   </tr>
                 </tbody>
               </table>
@@ -278,7 +242,6 @@ export const AdminAssessmentsView = {
   },
 
   initEvents() {
-    // Tab switching handler
     const tabBtns = document.querySelectorAll('.assess-tab-btn');
     const tabContents = document.querySelectorAll('.assess-tab-content');
 
@@ -299,7 +262,6 @@ export const AdminAssessmentsView = {
       });
     });
 
-    // Formative Batch Save Form
     const formativeForm = document.getElementById('form-save-formative-batch');
     const slotSelect = document.getElementById('formative-slot-select');
 
@@ -320,7 +282,7 @@ export const AdminAssessmentsView = {
           });
           store.showToast(`Penilaian Formatif ${fSlot} berhasil disimpan ke database.`, 'success');
         } catch (err) {
-          store.showToast(`Gagal menyimpan Formatif: ${err.message}`, 'error');
+          store.showToast(`Gagal: ${err.message}`, 'error');
         }
       });
     }
