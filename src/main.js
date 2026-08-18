@@ -1,3 +1,4 @@
+// ==================== FILE: src/main.js ====================
 /**
  * MATHENA APPLICATION BOOTSTRAPPER (ENTRY POINT)
  * Mengintegrasikan seluruh router, state store, PWA service worker,
@@ -9,6 +10,7 @@ import { store } from './store/state.js';
 
 // Import Modul Admin / Guru
 import { AdminDashboardView } from './views/admin/dashboard.js';
+import { AdminStudentsView } from './views/admin/students.js'; // View Data Siswa Baru
 import { AdminMaterialsView } from './views/admin/materials.js';
 import { AdminAssignmentsView } from './views/admin/assignments.js';
 import { AdminAssessmentsView } from './views/admin/assessments.js';
@@ -22,9 +24,6 @@ import { QAChatView } from './views/qa/qa_chat.js';
 import { CBTExamRoomView } from './views/cbt/exam_room.js';
 import { ProctorMonitoringView } from './views/proctor/monitoring.js';
 
-/**
- * Registrasi View Dinamis Berdasarkan Peran Pengguna Aktif
- */
 function configureViewRegistry() {
   const role = (store.getState().role || '').toUpperCase();
   const isStudent = role === 'STUDENT' || role === 'SISWA';
@@ -39,7 +38,8 @@ function configureViewRegistry() {
     ViewRegistry.dashboard = AdminDashboardView;
   }
 
-  // Modul Pembelajaran & Penugasan
+  // Modul Akademik & Siswa
+  ViewRegistry.students = AdminStudentsView;
   ViewRegistry.learning = AdminMaterialsView;
   ViewRegistry.assignments = AdminAssignmentsView;
   ViewRegistry.assessment = AdminAssessmentsView;
@@ -57,15 +57,12 @@ function configureViewRegistry() {
   ViewRegistry.proctor = ProctorMonitoringView;
 }
 
-// Inisialisasi awal registrasi
 configureViewRegistry();
 
-// Subscribe router bila terjadi perubahan auth/role
 store.subscribe(() => {
   configureViewRegistry();
 });
 
-// Registrasi Service Worker PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
@@ -74,7 +71,6 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Jalankan SPA Router
 document.addEventListener('DOMContentLoaded', () => {
   router.init();
 });
