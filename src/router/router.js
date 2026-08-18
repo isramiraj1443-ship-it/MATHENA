@@ -1,5 +1,6 @@
+// ==================== FILE: src/router/router.js ====================
 /**
- * MATHENA CLIENT-SIDE SPA ROUTER (UNIFIED)
+ * MATHENA CLIENT-SIDE SPA ROUTER (V2.1.0)
  */
 
 import { store } from '../store/state.js';
@@ -52,22 +53,50 @@ class Router {
   handleRoute() {
     const rawHash = window.location.hash || '#login';
     const hash = rawHash.split('?')[0];
-    const routeConfig = this.routes[hash] || this.routes['#dashboard'];
+    const routeConfig = this.routes[hash];
     const state = store.getState();
+
+    if (!routeConfig) {
+      store.showToast('Halaman tidak ditemukan.', 'warning');
+      window.location.hash = state.isAuthenticated ? '#dashboard' : '#login';
+      return;
+    }
 
     if (!routeConfig.public && !state.isAuthenticated) {
       window.location.hash = '#login';
       return;
     }
 
-    const viewContent = routeConfig.view() || '<div class="glass-panel" style="padding:20px;">Memuat modul...</div>';
-    if (hash === '#login') {
-      this.appRoot.innerHTML = viewContent;
-    } else {
-      this.appRoot.innerHTML = Layout.renderAppShell(viewContent, hash);
+    if (routeConfig.public && state.isAuthenticated) {
+      window.location.hash = state.role === 'PROCTOR' || state.role === 'PENGAWAS' ? '#proctor' : '#dashboard';
+      return;
     }
-    if (routeConfig.init) routeConfig.init();
-    Layout.renderMathFormulas(document.getElementById('app-main-viewport'));
+
+    if (routeConfig.roles && routeConfig.roles.length > 0) {
+      const userRole = (state.role || '').toUpperCase();
+      if (!routeConfig.roles.includes(userRole)) {
+        store.showToast(`Akses ditolak untuk peran [${userRole}].`, 'error');
+        window.location.hash = userRole === 'PROCTOR' || userRole === 'PENGAWAS' ? '#proctor' : '#dashboard';
+        return;
+      }
+    }
+
+    this.renderCurrentView(hash, routeConfig);
+  }
+
+  renderCurrentView(hash, routeConfig) {
+    if (hash === '#login') {
+      this.appRoot.innerHTML = routeConfig.view();
+      routeConfig.init();
+    } else {
+      const viewContent = routeConfig.view ? routeConfig.view() : '<div class="glass-panel" style="padding:20px;">Memuat modul...</div>';
+      this.appRoot.innerHTML = Layout.renderAppShell(viewContent, hash);
+      Layout.bindShellEvents();
+      if (routeConfig.init) {
+        routeConfig.init();
+      }
+      Layout.renderMathFormulas(document.getElementById('app-main-viewport'));
+    }
   }
 }
 
