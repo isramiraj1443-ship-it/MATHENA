@@ -1,6 +1,7 @@
 // ==================== FILE: src/components/layout.js ====================
 /**
  * MATHENA COMMON LAYOUT & UI COMPONENTS
+ * Dilengkapi Navigasi Menu Developer, Universal KaTeX Dispatcher, dan App Shell.
  */
 
 import { store } from '../store/state.js';
@@ -106,9 +107,12 @@ export const Layout = {
           <span class="nav-icon">✨</span> Mathena AI Copilot
         </a>
 
-        <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--white-muted); padding: 14px 14px 4px; font-weight: 700;">Administrasi</div>
+        <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--white-muted); padding: 14px 14px 4px; font-weight: 700;">Administrasi & Info</div>
         <a href="#reports" class="nav-item ${activeRoute === '#reports' ? 'active' : ''}">
           <span class="nav-icon">📑</span> Rekap & Laporan
+        </a>
+        <a href="#developer" class="nav-item ${activeRoute === '#developer' ? 'active' : ''}" style="border-left: 2px solid var(--teal-primary);">
+          <span class="nav-icon">👨‍🏫</span> Profil Developer
         </a>
       `;
     }
@@ -119,10 +123,13 @@ export const Layout = {
         <a href="#proctor" class="nav-item ${activeRoute === '#proctor' ? 'active' : ''}">
           <span class="nav-icon">🛡️</span> Monitoring Exam Room
         </a>
+        <a href="#developer" class="nav-item ${activeRoute === '#developer' ? 'active' : ''}">
+          <span class="nav-icon">👨‍🏫</span> Profil Developer
+        </a>
       `;
     }
 
-    // Siswa
+    // Default Siswa
     return `
       <a href="#dashboard" class="nav-item ${activeRoute === '#dashboard' ? 'active' : ''}">
         <span class="nav-icon">🏠</span> Beranda Siswa
@@ -139,20 +146,13 @@ export const Layout = {
       <a href="#cbt" class="nav-item ${activeRoute === '#cbt' ? 'active' : ''}">
         <span class="nav-icon">💻</span> Exam Room
       </a>
+      <a href="#developer" class="nav-item ${activeRoute === '#developer' ? 'active' : ''}">
+        <span class="nav-icon">👨‍🏫</span> Profil Developer
+      </a>
     `;
   },
 
   renderMobileNavItems(role, activeRoute) {
-    const isProctor = role === 'PROCTOR' || role === 'PENGAWAS';
-    if (isProctor) {
-      return `
-        <a href="#proctor" class="mobile-nav-link ${activeRoute === '#proctor' ? 'active' : ''}">
-          <span class="icon">🛡️</span>
-          <span>Monitoring</span>
-        </a>
-      `;
-    }
-
     return `
       <a href="#dashboard" class="mobile-nav-link ${activeRoute === '#dashboard' ? 'active' : ''}">
         <span class="icon">🏠</span>
@@ -166,13 +166,13 @@ export const Layout = {
         <span class="icon">📝</span>
         <span>Tugas</span>
       </a>
-      <a href="#qa" class="mobile-nav-link ${activeRoute === '#qa' ? 'active' : ''}">
-        <span class="icon">💬</span>
-        <span>Tanya</span>
-      </a>
       <a href="#cbt" class="mobile-nav-link ${activeRoute === '#cbt' ? 'active' : ''}">
         <span class="icon">💻</span>
-        <span>Exam Room</span>
+        <span>Ujian</span>
+      </a>
+      <a href="#developer" class="mobile-nav-link ${activeRoute === '#developer' ? 'active' : ''}">
+        <span class="icon">👨‍🏫</span>
+        <span>Developer</span>
       </a>
     `;
   },
@@ -226,6 +226,7 @@ export const Layout = {
             { left: '\\[', right: '\\]', display: true },
             { left: '\\(', right: '\\)', display: false }
           ],
+          ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code"],
           throwOnError: false
         });
       } catch (err) {
