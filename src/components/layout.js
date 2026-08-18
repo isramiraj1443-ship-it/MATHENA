@@ -1,8 +1,6 @@
 // ==================== FILE: src/components/layout.js ====================
 /**
  * MATHENA COMMON LAYOUT & UI COMPONENTS
- * Menyediakan App Shell, Header, Sidebar Lengkap Guru/Admin, Mobile Nav Siswa,
- * Toast Notifications Container, dan KaTeX Math Rendering Dispatcher.
  */
 
 import { store } from '../store/state.js';
@@ -89,7 +87,7 @@ export const Layout = {
           <span class="nav-icon">📝</span> Penugasan & Koreksi
         </a>
         <a href="#assessment" class="nav-item ${activeRoute === '#assessment' ? 'active' : ''}">
-          <span class="nav-icon">📈</span> Penilaian Formatif 1–5
+          <span class="nav-icon">📈</span> Penilaian & Rekap Nilai
         </a>
         <a href="#qa" class="nav-item ${activeRoute === '#qa' ? 'active' : ''}">
           <span class="nav-icon">💬</span> Tanya Jawab (QA)
@@ -100,10 +98,9 @@ export const Layout = {
 
         <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--white-muted); padding: 14px 14px 4px; font-weight: 700;">Ujian & Evaluasi</div>
         <a href="#cbt" class="nav-item ${activeRoute === '#cbt' ? 'active' : ''}">
-          <span class="nav-icon">💻</span> EXAM CBT Platform
+          <span class="nav-icon">💻</span> Exam Room
         </a>
 
-        <!-- FITUR KHUSUS GURU SESUAI PRD: MATHENA AI -->
         <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--gold-celestial); padding: 14px 14px 4px; font-weight: 700;">Kecerdasan Buatan</div>
         <a href="#ai" class="nav-item ${activeRoute === '#ai' ? 'active' : ''}" style="border-left: 2px solid var(--gold-celestial);">
           <span class="nav-icon">✨</span> Mathena AI Copilot
@@ -120,12 +117,12 @@ export const Layout = {
       return `
         <div style="font-size: 0.72rem; text-transform: uppercase; color: var(--white-muted); padding: 8px 14px 4px; font-weight: 700;">Pengawasan Ujian</div>
         <a href="#proctor" class="nav-item ${activeRoute === '#proctor' ? 'active' : ''}">
-          <span class="nav-icon">🛡️</span> Monitoring EXAM CBT
+          <span class="nav-icon">🛡️</span> Monitoring Exam Room
         </a>
       `;
     }
 
-    // Default: Siswa
+    // Siswa
     return `
       <a href="#dashboard" class="nav-item ${activeRoute === '#dashboard' ? 'active' : ''}">
         <span class="nav-icon">🏠</span> Beranda Siswa
@@ -140,7 +137,7 @@ export const Layout = {
         <span class="nav-icon">💬</span> Tanya Guru
       </a>
       <a href="#cbt" class="nav-item ${activeRoute === '#cbt' ? 'active' : ''}">
-        <span class="nav-icon">💻</span> Ruang Ujian CBT
+        <span class="nav-icon">💻</span> Exam Room
       </a>
     `;
   },
@@ -175,7 +172,7 @@ export const Layout = {
       </a>
       <a href="#cbt" class="mobile-nav-link ${activeRoute === '#cbt' ? 'active' : ''}">
         <span class="icon">💻</span>
-        <span>Ujian</span>
+        <span>Exam Room</span>
       </a>
     `;
   },
@@ -225,7 +222,9 @@ export const Layout = {
         window.renderMathInElement(targetElement, {
           delimiters: [
             { left: '$$', right: '$$', display: true },
-            { left: '$', right: '$', display: false }
+            { left: '$', right: '$', display: false },
+            { left: '\\[', right: '\\]', display: true },
+            { left: '\\(', right: '\\)', display: false }
           ],
           throwOnError: false
         });
@@ -233,6 +232,60 @@ export const Layout = {
         console.warn('[KaTeX Rendering Warning]:', err);
       }
     }
+  },
+
+  renderMathToolbar(targetTextareaId) {
+    const symbols = [
+      { label: '√x', latex: '\\sqrt{x}' },
+      { label: 'a/b', latex: '\\frac{a}{b}' },
+      { label: 'x²', latex: 'x^{2}' },
+      { label: 'xₙ', latex: 'x_{n}' },
+      { label: '±', latex: '\\pm' },
+      { label: '×', latex: '\\times' },
+      { label: '÷', latex: '\\div' },
+      { label: 'π', latex: '\\pi' },
+      { label: 'θ', latex: '\\theta' },
+      { label: 'α', latex: '\\alpha' },
+      { label: 'β', latex: '\\beta' },
+      { label: '≤', latex: '\\le' },
+      { label: '≥', latex: '\\ge' },
+      { label: '≠', latex: '\\neq' },
+      { label: '°', latex: '^\\circ' },
+      { label: '△', latex: '\\triangle' },
+      { label: '∠', latex: '\\angle' },
+      { label: '∑', latex: '\\sum_{i=1}^{n}' },
+      { label: '∫', latex: '\\int' },
+      { label: '∞', latex: '\\infty' }
+    ];
+
+    return `
+      <div class="math-symbol-toolbar">
+        <span style="font-size: 0.72rem; color: var(--gold-celestial); font-weight:700; align-self:center; margin-right:4px;">∑ FORMULA:</span>
+        ${symbols.map(s => `
+          <button type="button" class="math-toolbar-btn" data-latex="${s.latex}" data-target="${targetTextareaId}">${s.label}</button>
+        `).join('')}
+      </div>
+    `;
+  },
+
+  bindMathToolbarEvents() {
+    document.querySelectorAll('.math-toolbar-btn').forEach(btn => {
+      btn.onclick = () => {
+        const latex = btn.getAttribute('data-latex');
+        const targetId = btn.getAttribute('data-target');
+        const textarea = document.getElementById(targetId);
+        if (!textarea) return;
+
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const text = textarea.value;
+        const insertText = `$${latex}$`;
+        textarea.value = text.substring(0, start) + insertText + text.substring(end);
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = start + insertText.length;
+        textarea.dispatchEvent(new Event('input'));
+      };
+    });
   },
 
   escapeHtml(text) {
