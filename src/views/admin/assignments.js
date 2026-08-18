@@ -1,7 +1,8 @@
+// ==================== FILE: src/views/admin/assignments.js ====================
 /**
  * MATHENA ASSIGNMENTS MANAGEMENT VIEW
- * Mengelola penugasan matematika siswa, tenggat waktu, upload metadata berkas,
- * pemeriksaan hasil pengerjaan, dan pemberian skor & feedback.
+ * Mengelola penugasan matematika, batas pengumpulan berkas,
+ * dan pemeriksaan nilai siswa dengan antarmuka yang bersih.
  */
 
 import { api } from '../../services/api.js';
@@ -15,7 +16,7 @@ export const AdminAssignmentsView = {
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 14px;">
           <div>
-            <h1 style="font-size: 1.6rem;">📝 Penugasan & Pemeriksaan Tugas</h1>
+            <h1 style="font-size: 1.6rem; color: var(--white-crisp);">📝 Penugasan & Koreksi Tugas</h1>
             <p style="font-size: 0.85rem; color: var(--white-muted);">
               Buat tugas matematika terstruktur, pantau submission berkas siswa, dan berikan evaluasi nilai.
             </p>
@@ -36,7 +37,7 @@ export const AdminAssignmentsView = {
             <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px;">
               <div class="form-group">
                 <label class="form-label">Nama / Judul Tugas</label>
-                <input type="text" id="assign-title" class="form-input" placeholder="Tugas 1: Operasi Bilangan Berpangkat" required />
+                <input type="text" id="assign-title" class="form-input" placeholder="Contoh: Latihan Bentuk Pangkat dan Akar" required />
               </div>
               <div class="form-group">
                 <label class="form-label">Kelas</label>
@@ -54,13 +55,13 @@ export const AdminAssignmentsView = {
             </div>
 
             <div class="form-group">
-              <label class="form-label">Instruksi Soal / Panduan Pengerjaan (LaTeX didukung)</label>
-              <textarea id="assign-instructions" class="form-textarea" rows="4" placeholder="Selesaikan 5 soal penyederhanaan bentuk akar: $\\sqrt{72} + 3\\sqrt{2} - \\sqrt{50}$..." required></textarea>
+              <label class="form-label">Instruksi Soal / Panduan Pengerjaan</label>
+              <textarea id="assign-instructions" class="form-textarea" rows="3" placeholder="Tuliskan petunjuk pengerjaan tugas di sini..." required></textarea>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
               <div class="form-group">
-                <label class="form-label">Format Pengumpulan yang Diizinkan</label>
+                <label class="form-label">Format Pengumpulan Berkas</label>
                 <input type="text" class="form-input" value="PDF, JPG, PNG, DOCX" readonly style="color: var(--white-muted);" />
               </div>
               <div class="form-group">
@@ -69,14 +70,14 @@ export const AdminAssignmentsView = {
               </div>
             </div>
 
-            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 12px;">
+            <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 10px;">
               <button type="button" id="btn-cancel-assign" class="btn btn-secondary">Batal</button>
               <button type="submit" class="btn btn-primary">Publikasikan Penugasan</button>
             </div>
           </form>
         </div>
 
-        <!-- DAFTAR PENUGASAN AKTIF & STATUS SUBMISSION -->
+        <!-- DAFTAR PENUGASAN AKTIF -->
         <div class="table-container glass-panel">
           <table class="mathena-table">
             <thead>
@@ -85,31 +86,31 @@ export const AdminAssignmentsView = {
                 <th>Kelas</th>
                 <th>Batas Waktu</th>
                 <th>Terkumpul</th>
-                <th>Status Nilai</th>
+                <th>Status Penilaian</th>
                 <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>
-                  <div style="font-weight: 600;">Latihan Bentuk Pangkat & Akar</div>
-                  <div style="font-size: 0.75rem; color: var(--white-muted);">$$\\sqrt{a} \\times \\sqrt{b} = \\sqrt{ab}$$</div>
+                  <div style="font-weight: 600; color: var(--white-crisp);">Latihan Bentuk Pangkat dan Akar</div>
+                  <div style="font-size: 0.75rem; color: var(--white-muted);">Operasi Aljabar Lanjut</div>
                 </td>
-                <td><span class="badge badge-teal">9A</span></td>
-                <td>20 Agu 2026, 23:59</td>
+                <td><span class="badge badge-teal">Kelas 9A</span></td>
+                <td>20 Agustus 2026, 23:59 WIB</td>
                 <td><span class="badge badge-success">28 / 32 Siswa</span></td>
-                <td><span class="badge badge-gold">8 Belum Diperiksa</span></td>
+                <td><span class="badge badge-gold">8 Perlu Diperiksa</span></td>
                 <td>
-                  <button class="btn btn-primary btn-sm btn-review-submission" data-title="Latihan Bentuk Pangkat & Akar">Periksa Jawaban</button>
+                  <button class="btn btn-primary btn-sm btn-review-submission" data-title="Latihan Bentuk Pangkat dan Akar">Periksa Jawaban</button>
                 </td>
               </tr>
               <tr>
                 <td>
-                  <div style="font-weight: 600;">Penyelesaian Soal Cerita SPLDV</div>
-                  <div style="font-size: 0.75rem; color: var(--white-muted);">Eliminasi & Substitusi</div>
+                  <div style="font-weight: 600; color: var(--white-crisp);">Penyelesaian Soal Cerita SPLDV</div>
+                  <div style="font-size: 0.75rem; color: var(--white-muted);">Metode Eliminasi & Substitusi</div>
                 </td>
-                <td><span class="badge badge-teal">8B</span></td>
-                <td>18 Agu 2026, 17:00</td>
+                <td><span class="badge badge-teal">Kelas 8B</span></td>
+                <td>18 Agustus 2026, 17:00 WIB</td>
                 <td><span class="badge badge-success">30 / 30 Siswa</span></td>
                 <td><span class="badge badge-teal">Selesai Dinilai</span></td>
                 <td>
@@ -120,7 +121,7 @@ export const AdminAssignmentsView = {
           </table>
         </div>
 
-        <!-- MODAL DRAWER PEMERIKSAAN TUGAS SISWA -->
+        <!-- DRAWER PEMERIKSAAN NILAI -->
         <div id="grading-drawer-modal" class="glass-panel" style="display: none; padding: 24px; margin-top: 24px; border-color: var(--gold-celestial);">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
             <h3 id="grading-drawer-title" style="color: var(--gold-celestial);">Pemeriksaan Jawaban Siswa</h3>
@@ -135,7 +136,7 @@ export const AdminAssignmentsView = {
                   <th>Waktu Submit</th>
                   <th>Berkas Jawaban</th>
                   <th>Skor (0–100)</th>
-                  <th>Catatan / Feedback Guru</th>
+                  <th>Catatan Feedback</th>
                   <th>Simpan</th>
                 </tr>
               </thead>
@@ -145,8 +146,8 @@ export const AdminAssignmentsView = {
                     <div style="font-weight: 600;">Aditya Pratama</div>
                     <div style="font-size: 0.72rem; color: var(--white-muted);">STU-2026-001</div>
                   </td>
-                  <td>18 Agu 2026, 14:22 <span class="badge badge-success" style="font-size:0.65rem;">Tepat Waktu</span></td>
-                  <td><a href="#" class="btn btn-outline-teal btn-sm" style="font-size:0.75rem;">📄 Lihat PDF (Jawaban)</a></td>
+                  <td>18 Agu 2026, 14:22 WIB <span class="badge badge-success" style="font-size:0.65rem;">Tepat Waktu</span></td>
+                  <td><a href="#" class="btn btn-outline-teal btn-sm" style="font-size:0.75rem;">📄 Lihat PDF</a></td>
                   <td style="width: 110px;">
                     <input type="number" class="form-input" value="95" min="0" max="100" style="padding: 4px 8px;" />
                   </td>
@@ -204,12 +205,11 @@ export const AdminAssignmentsView = {
           formCreate.reset();
           hideCreate();
         } catch (err) {
-          store.showToast(`Gagal membuat penugasan: ${err.message}`, 'error');
+          store.showToast(`Gagal: ${err.message}`, 'error');
         }
       });
     }
 
-    // Handle buka drawer penilaian
     document.querySelectorAll('.btn-review-submission').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const title = e.currentTarget.getAttribute('data-title');
