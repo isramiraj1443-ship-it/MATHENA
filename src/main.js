@@ -1,8 +1,10 @@
-// ==================== FILE: src/main.js ====================
+/**
+ * MATHENA MAIN ENTRY POINT
+ */
+
 import { router, ViewRegistry } from './router/router.js';
 import { store } from './store/state.js';
 
-// Modul Admin
 import { AdminDashboardView } from './views/admin/dashboard.js';
 import { AdminStudentsView } from './views/admin/students.js';
 import { AdminMaterialsView } from './views/admin/materials.js';
@@ -12,7 +14,6 @@ import { AdminAiCopilotView } from './views/admin/ai_copilot.js';
 import { AdminJournalsView } from './views/admin/journals.js';
 import { AdminReportsView } from './views/admin/reports.js';
 
-// Modul Siswa & CBT Engine Terpadu
 import { StudentDashboardView } from './views/student/dashboard.js';
 import { QAChatView } from './views/qa/qa_chat.js';
 import { CBTExamRoomView } from './views/cbt/exam_room.js';
@@ -36,7 +37,7 @@ function configureViewRegistry() {
   ViewRegistry.assignments = AdminAssignmentsView;
   ViewRegistry.assessment = AdminAssessmentsView;
   ViewRegistry.qa = QAChatView;
-  ViewRegistry.cbt = CBTExamRoomView; // CBT Engine Master
+  ViewRegistry.cbt = CBTExamRoomView;
   ViewRegistry.ai = AdminAiCopilotView;
   ViewRegistry.journal = AdminJournalsView;
   ViewRegistry.reports = AdminReportsView;
@@ -45,12 +46,6 @@ function configureViewRegistry() {
 
 configureViewRegistry();
 store.subscribe(configureViewRegistry);
-
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').catch(err => console.warn(err));
-  });
-}
 
 document.addEventListener('DOMContentLoaded', () => {
   router.init();
