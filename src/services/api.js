@@ -4,7 +4,7 @@
  */
 
 const API_CONFIG = {
-  BASE_URL: 'https://script.google.com/macros/s/AKfycbztMttJMktSiK_EROyZJ6QW8xUMLB7UmAQb3IZUAfybIRBH-m6OwC7EWPJhzn80WOftfw/exec',
+  BASE_URL: 'https://script.google.com/macros/s/AKfycbzAxblCOsgLn2GbqgvI6q75g6HE03fTDqbQwkvlHIeI2QppHjwSLtGupfaZH1rLkZ0CJg/exec',
   STORAGE_KEYS: {
     AUTH_TOKEN: 'mathena_auth_token',
     USER_ROLE: 'mathena_user_role',
