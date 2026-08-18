@@ -6,7 +6,8 @@
  */
 
 const API_CONFIG = {
-  BASE_URL: 'https://script.google.com/macros/s/AKfycbxDvutT33F7mkvwSAJj9YZ9oWaEdGZ-1SAc5pkWLEC9qSwCTBqlVOAiXY4WHUEs1ffuvw/exec',
+  BASE_URL: 'saya mendapatkan link_url deploy baru https://script.google.com/macros/s/AKfycbxDvutT33F7mkvwSAJj9YZ9oWaEdGZ-1SAc5pkWLEC9qSwCTBqlVOAiXY4WHUEs1ffuvw/exec
+harus saya copy kemana?',
   STORAGE_KEYS: {
     AUTH_TOKEN: 'mathena_auth_token',
     USER_ROLE: 'mathena_user_role',
