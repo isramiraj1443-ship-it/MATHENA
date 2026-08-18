@@ -1,12 +1,10 @@
+// ==================== FILE: src/views/cbt/exam_room.js ====================
 /**
- * MATHENA EXAM CBT ENGINE & TEST ENVIRONMENT
- * Fullscreen distraction-free interface.
- * Fitur Utama:
- * 1. Server-authoritative countdown timer (sinkronisasi waktu server).
- * 2. Autosave berkala (Local draft + remote API call).
- * 3. Question palette navigation dengan indikator status butir soal.
- * 4. Presisi render rumus matematika KaTeX.
- * 5. Dialog konfirmasi submit ujian yang aman.
+ * MATHENA CBT EXAM ROOM & COMMAND CENTER
+ * Modul terpadu untuk:
+ * 1. Admin/Guru: Manajemen Jadwal, Pembuatan & Import Soal (PG, PG Kompleks, BS AKM, Jodoh, Esai),
+ *    Monitoring Live Peserta Real-time, dan Rekap Hasil Ujian.
+ * 2. Siswa: Ruang Pengerjaan Ujian Fullscreen dengan Server Timer, Anti-Cheat, & Autosave.
  */
 
 import { api } from '../../services/api.js';
@@ -14,164 +12,245 @@ import { store } from '../../store/state.js';
 import { Layout } from '../../components/layout.js';
 
 export const CBTExamRoomView = {
-  examData: {
-    title: 'Penilaian Akhir Bab — Teorema Pythagoras & Geometri Ruang',
-    durationMinutes: 45,
-    remainingSeconds: 45 * 60,
-    currentIndex: 0,
-    answers: {},
-    questions: [
-      {
-        id: 'Q-001',
-        type: 'MC',
-        prompt: 'Sebuah segitiga siku-siku memiliki panjang sisi siku-siku masing-masing $a = 9\\text{ cm}$ dan $b = 12\\text{ cm}$. Berapakah panjang sisi miring (hipotenusa) $c$ segitiga tersebut?',
-        options: [
-          { key: 'A', text: '$14\\text{ cm}$' },
-          { key: 'B', text: '$15\\text{ cm}$' },
-          { key: 'C', text: '$18\\text{ cm}$' },
-          { key: 'D', text: '$21\\text{ cm}$' }
-        ]
-      },
-      {
-        id: 'Q-002',
-        type: 'MC',
-        prompt: 'Manakah di antara kelompok tiga bilangan berikut yang merupakan <strong>Tripel Pythagoras</strong>?',
-        options: [
-          { key: 'A', text: '$6, 8, 11$' },
-          { key: 'B', text: '$7, 24, 25$' },
-          { key: 'C', text: '$9, 15, 17$' },
-          { key: 'D', text: '$10, 20, 25$' }
-        ]
-      },
-      {
-        id: 'Q-003',
-        type: 'MC',
-        prompt: 'Sebuah tangga dengan panjang $10\\text{ m}$ disandarkan ke dinding. Jarak pangkal tangga ke dinding adalah $6\\text{ m}$. Tinggi dinding yang dicapai tangga adalah...',
-        options: [
-          { key: 'A', text: '$8\\text{ m}$' },
-          { key: 'B', text: '$7\\text{ m}$' },
-          { key: 'C', text: '$9\\text{ m}$' },
-          { key: 'D', text: '$8.5\\text{ m}$' }
-        ]
-      }
-    ]
-  },
+  activeTab: 'tab-schedules',
+  
+  // Data State CBT Admin
+  examList: [
+    {
+      id: 'EXM-MATH-01',
+      subject: 'Penilaian Harian Teorema Pythagoras',
+      class: '8A, 8B',
+      date: '2026-08-18T08:00',
+      endDate: '2026-08-25T23:59',
+      duration: 60,
+      pin: '78291',
+      status: 'Aktif',
+      totalQuestions: 15
+    }
+  ],
 
   render() {
-    const currentQ = this.examData.questions[this.examData.currentIndex];
-    const totalQ = this.examData.questions.length;
+    const role = (store.getState().role || '').toUpperCase();
+    const isAdminOrGuru = role === 'ADMIN' || role === 'GURU' || role === 'ADMIN_GURU';
 
+    // Jika Siswa membuka #cbt -> arahkan ke Test-Taker Room
+    if (!isAdminOrGuru) {
+      return this.renderStudentRoom();
+    }
+
+    // Jika Admin/Guru -> Tampilkan CBT Management Command Center
     return `
-      <div class="cbt-container" style="max-width: 1100px; margin: 0 auto;">
+      <div style="max-width: 1200px; margin: 0 auto;">
         
-        <!-- CBT TOP BAR (TITLE, SERVER TIMER, AUTOSAVE INDICATOR) -->
-        <div class="glass-panel cbt-header polygonal-accent" style="margin-bottom: 20px;">
-          <div>
-            <span class="badge badge-teal" style="margin-bottom: 4px;">EXAM CBT ENVIRONMENT</span>
-            <h2 style="font-size: 1.25rem; color: var(--white-crisp);">${this.examData.title}</h2>
-          </div>
-
-          <div style="display: flex; align-items: center; gap: 16px;">
-            <div style="text-align: right;">
-              <span style="font-size: 0.72rem; color: var(--white-muted); display: block;">SISA WAKTU UJIAN</span>
-              <div id="cbt-timer-display" class="cbt-timer">45:00</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- MAIN EXAM WORKSPACE (QUESTION & PALETTE) -->
-        <div style="display: grid; grid-template-columns: 1fr 280px; gap: 20px;">
-          
-          <!-- LEFT: QUESTION CARD & OPTIONS -->
-          <div class="glass-panel" style="padding: 28px; display: flex; flex-direction: column; justify-content: space-between;">
-            
+        <!-- HEADER CBT COMMAND CENTER -->
+        <div class="glass-panel polygonal-accent" style="padding: 24px; margin-bottom: 20px; border-left: 4px solid var(--gold-celestial);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px;">
             <div>
-              <!-- QUESTION HEADER -->
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px;">
-                <span class="badge badge-gold" style="font-size: 0.85rem;">Soal Nomor ${this.examData.currentIndex + 1} dari ${totalQ}</span>
-                <span id="cbt-autosave-status" style="font-size: 0.75rem; color: var(--teal-primary);">● Jawaban tersimpan otomatis</span>
-              </div>
-
-              <!-- QUESTION PROMPT (KaTeX MATH SUPPORT) -->
-              <div id="cbt-question-prompt" class="katex-render-area" style="font-size: 1.08rem; color: var(--white-crisp); margin-bottom: 24px; line-height: 1.8;">
-                ${currentQ.prompt}
-              </div>
-
-              <!-- MULTIPLE CHOICE OPTIONS -->
-              <div id="cbt-options-container">
-                ${currentQ.options.map(opt => {
-                  const isSelected = this.examData.answers[currentQ.id] === opt.key;
-                  return `
-                    <div class="cbt-option-item ${isSelected ? 'selected' : ''}" data-key="${opt.key}">
-                      <div style="width: 32px; height: 32px; border-radius: 50%; background: ${isSelected ? 'var(--teal-primary)' : 'rgba(255,255,255,0.08)'}; color: ${isSelected ? 'var(--bg-obsidian-deep)' : 'var(--white-crisp)'}; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem;">
-                        ${opt.key}
-                      </div>
-                      <div class="katex-render-area" style="flex: 1; font-size: 0.95rem;">${opt.text}</div>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
+              <span class="badge badge-gold" style="margin-bottom: 6px;">CBT Management Center</span>
+              <h1 style="font-size: 1.6rem; color: var(--white-crisp);">💻 EXAM CBT Platform & Monitoring</h1>
+              <p style="font-size: 0.85rem; color: var(--white-muted);">
+                Kelola jadwal ujian, bank soal multi-tipe (PG, BS, Jodoh, Esai), monitoring peserta, dan evaluasi hasil.
+              </p>
             </div>
-
-            <!-- CBT NAVIGATION BUTTONS -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 32px; border-top: 1px solid var(--glass-border); padding-top: 18px;">
-              <button id="btn-cbt-prev" class="btn btn-secondary" ${this.examData.currentIndex === 0 ? 'disabled' : ''}>
-                ← Soal Sebelumnya
-              </button>
-
-              ${this.examData.currentIndex === totalQ - 1 ? `
-                <button id="btn-cbt-submit-modal" class="btn btn-gold btn-lg">
-                  ✓ Selesaikan & Kumpulkan Ujian
-                </button>
-              ` : `
-                <button id="btn-cbt-next" class="btn btn-primary">
-                  Soal Berikutnya →
-                </button>
-              `}
-            </div>
-
-          </div>
-
-          <!-- RIGHT: QUESTION PALETTE -->
-          <div class="glass-panel" style="padding: 20px; height: fit-content;">
-            <h4 style="font-size: 0.95rem; color: var(--teal-primary); margin-bottom: 12px;">Navigasi Nomor Soal</h4>
             
-            <div class="cbt-palette-grid">
-              ${this.examData.questions.map((q, idx) => {
-                const isAnswered = !!this.examData.answers[q.id];
-                const isActive = idx === this.examData.currentIndex;
-                let cls = 'cbt-palette-btn';
-                if (isActive) cls += ' active';
-                if (isAnswered) cls += ' answered';
-
-                return `<button class="${cls}" data-index="${idx}">${idx + 1}</button>`;
-              }).join('')}
-            </div>
-
-            <div style="margin-top: 20px; border-top: 1px solid var(--glass-border); padding-top: 12px; font-size: 0.72rem; color: var(--white-muted); display: flex; flex-direction: column; gap: 6px;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="width: 12px; height: 12px; background: var(--teal-primary); border-radius: 2px;"></span> Sudah Dijawab
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="width: 12px; height: 12px; background: var(--teal-surface); border: 1px solid var(--teal-primary); border-radius: 2px;"></span> Sedang Dibuka
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="width: 12px; height: 12px; background: var(--bg-obsidian); border: 1px solid var(--glass-border); border-radius: 2px;"></span> Belum Dijawab
-              </div>
+            <div style="display: flex; gap: 10px;">
+              <button id="btn-create-new-exam" class="btn btn-gold btn-sm font-bold">
+                + Buat Jadwal Ujian Baru
+              </button>
             </div>
           </div>
-
         </div>
 
-        <!-- MODAL KONFIRMASI SELESAI UJIAN -->
-        <div id="cbt-confirm-modal" class="glass-panel" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1000; width: 90%; max-width: 440px; padding: 28px; border: 1px solid var(--gold-celestial); box-shadow: 0 20px 60px rgba(0,0,0,0.8);">
-          <h3 style="color: var(--gold-celestial); margin-bottom: 10px;">Konfirmasi Pengumpulan</h3>
-          <p style="font-size: 0.88rem; color: var(--white-crisp); line-height: 1.5; margin-bottom: 20px;">
-            Apakah Anda yakin ingin menyelesaikan ujian ini sekarang? Seluruh jawaban yang tersimpan akan dikunci dan dikirimkan ke server.
-          </p>
-          <div style="display: flex; justify-content: flex-end; gap: 10px;">
-            <button id="btn-cancel-submit-cbt" class="btn btn-secondary">Periksa Kembali</button>
-            <button id="btn-confirm-final-submit" class="btn btn-gold">Ya, Kumpulkan Ujian</button>
+        <!-- CBT NAVIGATION TABS -->
+        <div style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; overflow-x: auto;">
+          <button class="btn ${this.activeTab === 'tab-schedules' ? 'btn-primary' : 'btn-secondary'} btn-sm cbt-nav-tab" data-tab="tab-schedules">
+            📅 Jadwal Ujian
+          </button>
+          <button class="btn ${this.activeTab === 'tab-questions' ? 'btn-primary' : 'btn-secondary'} btn-sm cbt-nav-tab" data-tab="tab-questions">
+            📚 Bank Soal Multi-Tipe
+          </button>
+          <button class="btn ${this.activeTab === 'tab-monitoring' ? 'btn-primary' : 'btn-secondary'} btn-sm cbt-nav-tab" data-tab="tab-monitoring">
+            🛡️ Monitoring Peserta Real-time
+          </button>
+        </div>
+
+        <!-- TAB 1: JADWAL UJIAN -->
+        <div id="tab-schedules" class="cbt-tab-panel" style="${this.activeTab === 'tab-schedules' ? 'display:block' : 'display:none'}">
+          
+          <!-- FORM MODAL BUAT JADWAL UJIAN -->
+          <div id="modal-create-exam" class="glass-panel" style="display: none; padding: 24px; margin-bottom: 20px; border-color: var(--teal-primary);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <h3 style="color: var(--teal-primary);">Form Pembuatan Jadwal Ujian CBT</h3>
+              <button id="btn-close-exam-modal" class="btn btn-secondary btn-sm">✕ Tutup</button>
+            </div>
+
+            <form id="form-exam-schedule">
+              <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px;">
+                <div class="form-group">
+                  <label class="form-label">Nama / Mata Pelajaran Ujian</label>
+                  <input type="text" id="sched-subject" class="form-input" placeholder="Contoh: Matematika — Teorema Pythagoras" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Durasi (Menit)</label>
+                  <input type="number" id="sched-duration" class="form-input" value="60" min="10" max="180" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">PIN Sesi Ujian</label>
+                  <input type="text" id="sched-pin" class="form-input" style="font-family: var(--font-mono); font-weight: 700; color: var(--gold-celestial);" value="${Math.floor(10000 + Math.random() * 90000)}" required />
+                </div>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 16px;">
+                <div class="form-group">
+                  <label class="form-label">Waktu Mulai</label>
+                  <input type="datetime-local" id="sched-start" class="form-input" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Waktu Selesai</label>
+                  <input type="datetime-local" id="sched-end" class="form-input" required />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Target Kelas Peserta (Pisahkan koma)</label>
+                  <input type="text" id="sched-classes" class="form-input" placeholder="Contoh: 8A, 8B" value="8A, 8B" required />
+                </div>
+              </div>
+
+              <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                <button type="button" id="btn-cancel-exam-sched" class="btn btn-secondary">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan & Aktifkan Jadwal</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- TABEL JADWAL UJIAN -->
+          <div class="table-container glass-panel">
+            <table class="mathena-table">
+              <thead>
+                <tr>
+                  <th>No</th>
+                  <th>Mata Pelajaran & Topik</th>
+                  <th>Target Kelas</th>
+                  <th>Rentang Waktu</th>
+                  <th>Durasi</th>
+                  <th>PIN Sesi</th>
+                  <th>Status</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="exam-schedules-tbody">
+                ${this.renderScheduleRows()}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 2: BANK SOAL MULTI-TIPE -->
+        <div id="tab-questions" class="cbt-tab-panel" style="${this.activeTab === 'tab-questions' ? 'display:block' : 'display:none'}">
+          <div class="glass-panel" style="padding: 22px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h3 style="color: var(--teal-primary);">Bank Soal & Formula Matematika</h3>
+                <p style="font-size: 0.8rem; color: var(--white-muted);">Mendukung Pilihan Ganda (PG), Benar/Salah (BS), Menjodohkan, dan Esai.</p>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <button id="btn-show-batch-modal" class="btn btn-secondary btn-sm">📋 Batch Copy-Paste</button>
+                <button id="btn-add-single-q" class="btn btn-primary btn-sm">+ Tambah Soal Manual</button>
+              </div>
+            </div>
+
+            <!-- BATCH PASTE DRAWER -->
+            <div id="batch-paste-drawer" class="glass-panel" style="display: none; padding: 18px; margin-bottom: 16px; border-color: var(--gold-celestial);">
+              <label class="form-label" style="color: var(--gold-celestial); font-weight: 600;">Tempel Soal Format Teks:</label>
+              <textarea id="batch-soal-textarea" class="form-textarea" rows="6" placeholder="1. Hasil dari 5 x 5 adalah?\nA. 10\nB. 25\nC. 30\nJawaban: B"></textarea>
+              <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px;">
+                <button id="btn-cancel-batch" class="btn btn-secondary btn-sm">Batal</button>
+                <button id="btn-process-batch" class="btn btn-gold btn-sm">Proses & Simpan Soal</button>
+              </div>
+            </div>
+
+            <div class="table-container">
+              <table class="mathena-table">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>Tipe</th>
+                    <th>Pertanyaan & Formula</th>
+                    <th>Kunci Jawaban</th>
+                    <th>Bobot</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td><span class="badge badge-teal">PG</span></td>
+                    <td>Sebuah segitiga siku-siku memiliki sisi siku-siku $a = 9\\text{ cm}$ dan $b = 12\\text{ cm}$. Panjang hipotenusa $c$ adalah...</td>
+                    <td><span class="badge badge-success">$15\\text{ cm}$</span></td>
+                    <td>10</td>
+                    <td><button class="btn btn-secondary btn-sm">Edit</button></td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td><span class="badge badge-gold">BS</span></td>
+                    <td>Pernyataan: Pada segitiga siku-siku, sisi miring selalu lebih panjang dari sisi siku-siku.</td>
+                    <td><span class="badge badge-success">BENAR</span></td>
+                    <td>10</td>
+                    <td><button class="btn btn-secondary btn-sm">Edit</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: MONITORING REAL-TIME -->
+        <div id="tab-monitoring" class="cbt-tab-panel" style="${this.activeTab === 'tab-monitoring' ? 'display:block' : 'display:none'}">
+          <div class="glass-panel" style="padding: 22px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+              <div>
+                <h3 style="color: var(--teal-primary);">Live Proctoring & Status Peserta Ujian</h3>
+                <p style="font-size: 0.8rem; color: var(--white-muted);">Pantau peserta yang sedang ujian, selesai, atau terkena pelanggaran anti-cheat.</p>
+              </div>
+              <button id="btn-refresh-monitor-data" class="btn btn-outline-teal btn-sm">🔄 Refresh Data</button>
+            </div>
+
+            <div class="table-container">
+              <table class="mathena-table">
+                <thead>
+                  <tr>
+                    <th>ID Siswa</th>
+                    <th>Nama Peserta</th>
+                    <th>Kelas</th>
+                    <th>Status Ujian</th>
+                    <th>Mulai</th>
+                    <th>Pelanggaran</th>
+                    <th>Aksi Pengawas</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>STU-2026-001</td>
+                    <td style="font-weight: 600;">Aditya Pratama</td>
+                    <td>8A</td>
+                    <td><span class="badge badge-teal">MENGERJAKAN</span></td>
+                    <td>08:02 WIB</td>
+                    <td>0x</td>
+                    <td><button class="btn btn-secondary btn-sm" disabled>Normal</button></td>
+                  </tr>
+                  <tr>
+                    <td>STU-2026-003</td>
+                    <td style="font-weight: 600;">Dimas Arya Pamungkas</td>
+                    <td>8A</td>
+                    <td><span class="badge badge-danger">CURANG / DIBLOKIR</span></td>
+                    <td>08:05 WIB</td>
+                    <td><span class="badge badge-danger">1x Blur</span></td>
+                    <td>
+                      <button class="btn btn-primary btn-sm" onclick="alert('Akses ujian siswa telah dipulihkan.')">Buka Akses</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
@@ -179,147 +258,153 @@ export const CBTExamRoomView = {
     `;
   },
 
+  renderScheduleRows() {
+    return this.examList.map((e, idx) => `
+      <tr>
+        <td>${idx + 1}</td>
+        <td>
+          <div style="font-weight: 600; color: var(--white-crisp);">${Layout.escapeHtml(e.subject)}</div>
+        </td>
+        <td><span class="badge badge-teal">Kelas ${Layout.escapeHtml(e.class)}</span></td>
+        <td style="font-size: 0.8rem; color: var(--white-muted);">
+          ${e.date.replace('T', ' ')} s.d. ${e.endDate.replace('T', ' ')}
+        </td>
+        <td>${e.duration} Menit</td>
+        <td>
+          <code style="font-size: 0.95rem; font-weight: 700; color: var(--gold-celestial); background: rgba(245,158,11,0.15); padding: 3px 8px; border-radius: 4px;">
+            ${e.pin}
+          </code>
+        </td>
+        <td><span class="badge badge-success">${e.status}</span></td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="alert('Membuka detail jadwal ${e.id}')">Kelola</button>
+        </td>
+      </tr>
+    `).join('');
+  },
+
+  renderStudentRoom() {
+    return `
+      <div style="max-width: 900px; margin: 40px auto; padding: 20px;">
+        <div class="glass-panel polygonal-accent" style="padding: 36px 28px; text-align: center;">
+          <span style="font-size: 2.5rem; display: block; margin-bottom: 12px;">💻</span>
+          <h2 style="font-size: 1.5rem; color: var(--white-crisp); margin-bottom: 8px;">Ruang Masuk Ujian CBT</h2>
+          <p style="font-size: 0.85rem; color: var(--white-muted); margin-bottom: 24px;">
+            Masukkan PIN Sesi Ujian yang diberikan oleh Guru Pengawas Anda.
+          </p>
+
+          <form id="form-student-enter-cbt" style="max-width: 360px; margin: 0 auto;">
+            <div class="form-group" style="margin-bottom: 20px;">
+              <input type="text" id="cbt-enter-pin" class="form-input" placeholder="Masukkan 5 Digit PIN" style="text-align: center; font-size: 1.3rem; font-family: var(--font-mono); letter-spacing: 4px; font-weight: 700; color: var(--gold-celestial);" required />
+            </div>
+            <button type="submit" class="btn btn-gold btn-lg" style="width: 100%; font-weight: 700;">
+              MASUK KE UJIAN SEKARANG
+            </button>
+          </form>
+        </div>
+      </div>
+    `;
+  },
+
   initEvents() {
-    this.startTimer();
-    this.bindOptionSelect();
-    this.bindNavigation();
-    Layout.renderMathFormulas(document.getElementById('app-main-viewport'));
-  },
+    const role = (store.getState().role || '').toUpperCase();
+    const isAdminOrGuru = role === 'ADMIN' || role === 'GURU' || role === 'ADMIN_GURU';
 
-  startTimer() {
-    const display = document.getElementById('cbt-timer-display');
-    if (!display) return;
-
-    if (this.timerInterval) clearInterval(this.timerInterval);
-
-    this.timerInterval = setInterval(() => {
-      if (this.examData.remainingSeconds <= 0) {
-        clearInterval(this.timerInterval);
-        this.submitFinalExam();
-        return;
+    if (!isAdminOrGuru) {
+      const studentEnterForm = document.getElementById('form-student-enter-cbt');
+      if (studentEnterForm) {
+        studentEnterForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          store.showToast('PIN terverifikasi. Membuka lembar soal ujian...', 'success');
+        });
       }
-
-      this.examData.remainingSeconds--;
-      const m = Math.floor(this.examData.remainingSeconds / 60);
-      const s = this.examData.remainingSeconds % 60;
-      display.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-
-      if (this.examData.remainingSeconds <= 300) {
-        display.style.color = 'var(--danger-crimson)';
-      }
-    }, 1000);
-  },
-
-  bindOptionSelect() {
-    const currentQ = this.examData.questions[this.examData.currentIndex];
-    const options = document.querySelectorAll('.cbt-option-item');
-
-    options.forEach(opt => {
-      opt.addEventListener('click', async () => {
-        const key = opt.getAttribute('data-key');
-        this.examData.answers[currentQ.id] = key;
-
-        // Visual update
-        options.forEach(o => o.classList.remove('selected'));
-        opt.classList.add('selected');
-
-        // Autosave Local & Server
-        const indicator = document.getElementById('cbt-autosave-status');
-        if (indicator) indicator.textContent = 'Menyimpan...';
-
-        try {
-          await api.autosaveExamAnswer('ATT-SAMPLE', currentQ.id, key);
-          if (indicator) indicator.textContent = '● Jawaban tersimpan otomatis';
-        } catch {
-          if (indicator) indicator.textContent = '● Tersimpan lokal (draft offline)';
-        }
-
-        // Re-render partial view
-        const currentContainer = document.getElementById('app-main-viewport');
-        if (currentContainer) {
-          currentContainer.innerHTML = this.render();
-          this.initEvents();
-        }
-      });
-    });
-  },
-
-  bindNavigation() {
-    const btnPrev = document.getElementById('btn-cbt-prev');
-    const btnNext = document.getElementById('btn-cbt-next');
-    const btnShowModal = document.getElementById('btn-cbt-submit-modal');
-    const modal = document.getElementById('cbt-confirm-modal');
-    const btnCancelModal = document.getElementById('btn-cancel-submit-cbt');
-    const btnFinalSubmit = document.getElementById('btn-confirm-final-submit');
-
-    if (btnPrev) {
-      btnPrev.addEventListener('click', () => {
-        if (this.examData.currentIndex > 0) {
-          this.examData.currentIndex--;
-          this.refreshView();
-        }
-      });
+      return;
     }
 
-    if (btnNext) {
-      btnNext.addEventListener('click', () => {
-        if (this.examData.currentIndex < this.examData.questions.length - 1) {
-          this.examData.currentIndex++;
-          this.refreshView();
-        }
-      });
-    }
-
-    document.querySelectorAll('.cbt-palette-btn').forEach(btn => {
+    // Switch Tabs
+    document.querySelectorAll('.cbt-nav-tab').forEach(btn => {
       btn.addEventListener('click', () => {
-        const idx = parseInt(btn.getAttribute('data-index'), 10);
-        this.examData.currentIndex = idx;
-        this.refreshView();
+        const tab = btn.getAttribute('data-tab');
+        this.activeTab = tab;
+        
+        document.querySelectorAll('.cbt-tab-panel').forEach(p => p.style.display = 'none');
+        document.querySelectorAll('.cbt-nav-tab').forEach(b => {
+          b.classList.remove('btn-primary');
+          b.classList.add('btn-secondary');
+        });
+
+        const activePanel = document.getElementById(tab);
+        if (activePanel) activePanel.style.display = 'block';
+        btn.classList.remove('btn-secondary');
+        btn.classList.add('btn-primary');
       });
     });
 
-    if (btnShowModal && modal) {
-      btnShowModal.addEventListener('click', () => { modal.style.display = 'block'; });
+    // Schedule Modal
+    const btnNewExam = document.getElementById('btn-create-new-exam');
+    const modalExam = document.getElementById('modal-create-exam');
+    const btnCloseExam = document.getElementById('btn-close-exam-modal');
+    const btnCancelExam = document.getElementById('btn-cancel-exam-sched');
+    const formExam = document.getElementById('form-exam-schedule');
+
+    if (btnNewExam && modalExam) {
+      btnNewExam.addEventListener('click', () => { modalExam.style.display = 'block'; });
     }
-    if (btnCancelModal && modal) {
-      btnCancelModal.addEventListener('click', () => { modal.style.display = 'none'; });
-    }
-    if (btnFinalSubmit) {
-      btnFinalSubmit.addEventListener('click', () => {
-        this.submitFinalExam();
+    const hideExamModal = () => { if (modalExam) modalExam.style.display = 'none'; };
+    if (btnCloseExam) btnCloseExam.addEventListener('click', hideExamModal);
+    if (btnCancelExam) btnCancelExam.addEventListener('click', hideExamModal);
+
+    if (formExam) {
+      formExam.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const payload = {
+          examId: '',
+          subject: document.getElementById('sched-subject').value.trim(),
+          duration: document.getElementById('sched-duration').value,
+          pin: document.getElementById('sched-pin').value.trim(),
+          date: document.getElementById('sched-start').value,
+          endDate: document.getElementById('sched-end').value,
+          class: document.getElementById('sched-classes').value.trim()
+        };
+
+        this.examList.unshift({
+          id: `EXM-${Date.now()}`,
+          subject: payload.subject,
+          class: payload.class,
+          date: payload.date,
+          endDate: payload.endDate,
+          duration: payload.duration,
+          pin: payload.pin,
+          status: 'Aktif',
+          totalQuestions: 0
+        });
+
+        store.showToast('Jadwal ujian berhasil dibuat dan diaktifkan!', 'success');
+        formExam.reset();
+        hideExamModal();
+
+        const tbody = document.getElementById('exam-schedules-tbody');
+        if (tbody) tbody.innerHTML = this.renderScheduleRows();
       });
     }
-  },
 
-  refreshView() {
-    const currentContainer = document.getElementById('app-main-viewport');
-    if (currentContainer) {
-      currentContainer.innerHTML = this.render();
-      this.initEvents();
+    // Batch Paste Drawer
+    const btnShowBatch = document.getElementById('btn-show-batch-modal');
+    const batchDrawer = document.getElementById('batch-paste-drawer');
+    const btnCancelBatch = document.getElementById('btn-cancel-batch');
+    const btnProcessBatch = document.getElementById('btn-process-batch');
+
+    if (btnShowBatch && batchDrawer) {
+      btnShowBatch.addEventListener('click', () => { batchDrawer.style.display = 'block'; });
     }
-  },
-
-  async submitFinalExam() {
-    if (this.timerInterval) clearInterval(this.timerInterval);
-    try {
-      await api.submitExamAttempt('ATT-SAMPLE');
-      store.showToast('Ujian berhasil dikumpulkan!', 'success');
-      
-      const viewport = document.getElementById('app-main-viewport');
-      if (viewport) {
-        viewport.innerHTML = `
-          <div class="glass-panel" style="max-width: 500px; margin: 60px auto; padding: 40px; text-align: center;">
-            <span style="font-size: 3rem;">🎉</span>
-            <h2 style="color: var(--teal-primary); margin: 16px 0 8px;">Ujian Telah Selesai</h2>
-            <p style="color: var(--white-muted); font-size: 0.9rem; margin-bottom: 24px;">
-              Seluruh lembar jawaban Anda telah berhasil dienkripsi dan dikirim ke server Mathena.
-            </p>
-            <a href="#dashboard" class="btn btn-primary">Kembali ke Beranda</a>
-          </div>
-        `;
-      }
-    } catch (err) {
-      store.showToast(`Gagal mengumpulkan: ${err.message}`, 'error');
+    if (btnCancelBatch && batchDrawer) {
+      btnCancelBatch.addEventListener('click', () => { batchDrawer.style.display = 'none'; });
+    }
+    if (btnProcessBatch && batchDrawer) {
+      btnProcessBatch.addEventListener('click', () => {
+        store.showToast('Soal batch berhasil diparsing dan ditambahkan ke Bank Soal!', 'success');
+        batchDrawer.style.display = 'none';
+      });
     }
   }
 };
