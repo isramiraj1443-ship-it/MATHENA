@@ -1,6 +1,7 @@
 // ==================== FILE: src/router/router.js ====================
 /**
- * MATHENA CLIENT-SIDE SPA ROUTER (V2.1.0)
+ * MATHENA CLIENT-SIDE SPA ROUTER (V2.2.0)
+ * Mendukung Rute Lengkap: Modul Akademik, CBT Exam Room, AI Copilot, dan Profil Developer.
  */
 
 import { store } from '../store/state.js';
@@ -18,7 +19,8 @@ export const ViewRegistry = {
   ai: null,
   journal: null,
   reports: null,
-  proctor: null
+  proctor: null,
+  developer: null
 };
 
 class Router {
@@ -36,7 +38,8 @@ class Router {
       '#ai': { roles: ['ADMIN', 'GURU', 'ADMIN_GURU'], view: () => ViewRegistry.ai?.render(), init: () => ViewRegistry.ai?.initEvents() },
       '#journal': { roles: ['ADMIN', 'GURU', 'ADMIN_GURU'], view: () => ViewRegistry.journal?.render(), init: () => ViewRegistry.journal?.initEvents() },
       '#reports': { roles: ['ADMIN', 'GURU', 'ADMIN_GURU'], view: () => ViewRegistry.reports?.render(), init: () => ViewRegistry.reports?.initEvents() },
-      '#proctor': { roles: ['PROCTOR', 'PENGAWAS', 'ADMIN', 'GURU', 'ADMIN_GURU'], view: () => ViewRegistry.proctor?.render(), init: () => ViewRegistry.proctor?.initEvents() }
+      '#proctor': { roles: ['PROCTOR', 'PENGAWAS', 'ADMIN', 'GURU', 'ADMIN_GURU'], view: () => ViewRegistry.proctor?.render(), init: () => ViewRegistry.proctor?.initEvents() },
+      '#developer': { roles: ['ADMIN', 'GURU', 'ADMIN_GURU', 'STUDENT', 'SISWA', 'PROCTOR', 'PENGAWAS'], view: () => ViewRegistry.developer?.render(), init: () => ViewRegistry.developer?.initEvents() }
     };
 
     window.addEventListener('hashchange', () => this.handleRoute());
